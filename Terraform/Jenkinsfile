@@ -1,0 +1,91 @@
+def awsCredentials = [[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-Venkat']]
+
+pipeline {
+
+	agent any
+
+	tools {
+		terraform 'terraform'
+	}
+
+	
+
+	parameters {
+		choice (name: 'Resource',choices:['ec2','ec2+rds'], description: 'choose resource to create')
+		choice (name: 'Environment',choices:['dev','test'], description: 'Choose environment')
+	}
+
+	stages {
+	
+	stage ('Environment') {
+	steps {
+		echo " The environment is ${params.Environment}"
+		}
+	}
+
+	stage ('Terraform init') {
+	steps {
+	script {
+		if (params.Resource == 'ec2') {
+		sh 'terraform  init'
+		}
+	else if (params.Resource == 'ec2+rds') {
+	  sh 'terraform -chdir=ec2-and-rds-with-vpc/ init'
+	}
+	else {
+	echo "No valid resource selected"
+	}
+	}
+	}
+	}
+
+	stage ('Terraform Plan') {
+	steps {
+	script {
+		if (params.Resource == 'ec2') {
+		withCredentials ([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-Venkat']]) {
+		sh 'terraform  plan'
+		}
+		}
+	else if (params.Resource == 'ec2+rds') {
+	   withCredentials ([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-Venkat']]) {
+                sh 'terraform -chdir=ec2-and-rds-with-vpc/  plan'
+
+	}
+	}
+	else {
+	echo "No valid resource selected"
+	}
+	}
+	 }
+	}
+	
+	stage ('Terraform apply') {
+	steps {
+	 script {
+                if (params.Resource == 'ec2') {
+		withCredentials ([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-Venkat']]) {
+		sh 'terraform  apply -auto-approve'
+		}
+		}
+        else if (params.Resource == 'ec2+rds') {
+           withCredentials ([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-Venkat']]) {
+                sh 'terraform -chdir=ec2-and-rds-with-vpc/  apply -auto-approve'
+        }
+	}
+	        else {
+        echo "No valid resource selected"
+        }
+	}
+	}		
+	}
+
+	stage('CleanWorkspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+}
+
+}
