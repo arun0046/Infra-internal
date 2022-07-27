@@ -1,0 +1,6 @@
+component = "channel-dss-r1-anubhuti-develop"
+region = "ap-south-1"
+environment = "qual"
+accountId = "413796946311"
+aws_sns_topic_name = "arn:aws:sns:ap-south-1:015723540760:OpsIncidentServiceTopic-MEDIUM-IMPAIRED"
+domain_name = "anubhuti-elk-qual"
